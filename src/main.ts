@@ -59,6 +59,10 @@ const output = document.querySelector<HTMLDivElement>('#output')!
 const form = document.querySelector<HTMLFormElement>('#command-form')!
 const input = document.querySelector<HTMLInputElement>('#command-input')!
 
+for (const eventName of ['copy', 'cut', 'contextmenu'] as const) {
+  output.addEventListener(eventName, (event) => event.preventDefault())
+}
+
 function printLine(text: string, className = '') {
   const line = document.createElement('div')
   line.className = `line ${className}`
