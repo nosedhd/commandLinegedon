@@ -68,6 +68,10 @@ function printLine(text: string, className = '') {
   output.scrollTop = output.scrollHeight
 }
 
+function wait(ms: number): Promise<void> {
+  return new Promise((resolve) => window.setTimeout(resolve, ms))
+}
+
 function validIPv4(value: string): boolean {
   const octets = value.split('.')
   return octets.length === 4 && octets.every((octet) => /^(0|[1-9]\d{0,2})$/.test(octet) && Number(octet) <= 255)
@@ -84,17 +88,74 @@ function canRun(): boolean {
   return true
 }
 
-function simulatePing(ip: string) {
+async function simulatePing(ip: string) {
   if (!canRun()) return
-  printLine(`$ ping ${ip}`, 'command')
-  printLine(`PING ${ip} (${ip}) 56(84) bytes of data.`)
-  const latency = 8 + (ip.split('.').reduce((sum, octet) => sum + Number(octet), 0) % 31)
-  window.setTimeout(() => {
-    printLine(`64 bytes from ${ip}: icmp_seq=1 ttl=57 time=${latency}.${ip.length} ms`, 'success')
+
+  if (ip === '192.0.2.1') {
+    printLine(`$ ping ${ip}`, 'command')
+    printLine(`PING ${ip} (192.0.2.1) 56(84) bytes of data.`)
+    const latencyMs = 18
+    await wait(800)
+    printLine(`83 bytes from ${ip}: icmp_seq=1 ttl=57 time=${latencyMs}.4 ms`, 'success')
+    await wait(200)
+    printLine(`69 bytes from ${ip}: icmp_seq=2 ttl=57 time=${latencyMs}.1 ms`, 'success')
+    await wait(300)
+    printLine(`73 bytes from ${ip}: icmp_seq=3 ttl=57 time=${latencyMs}.8 ms`, 'success')
+    await wait(100)
+    printLine(`67 bytes from ${ip}: icmp_seq=4 ttl=57 time=${latencyMs}.6 ms`, 'success')
+    await wait(400)
+    printLine(`123 bytes from ${ip}: icmp_seq=5 ttl=57 time=${latencyMs}.3 ms`, 'success')
     printLine(`--- ${ip} ping statistics ---`)
-    printLine('1 packets transmitted, 1 received, 0% packet loss, time 0ms', 'success')
-    printLine(`rtt min/avg/max = ${latency}.${ip.length}/${latency}.${ip.length}/${latency}.${ip.length} ms`, 'success')
-  }, 280)
+    printLine('5 packets transmitted, 5 received, 0% packet loss, time 1800ms', 'success')
+    printLine(`rtt min/avg/max = ${latencyMs}.1/${latencyMs}.4/${latencyMs}.8 ms`, 'success')
+    return
+  }
+
+  if (ip === '198.51.100.7') {
+    printLine(`$ ping ${ip}`, 'command')
+    printLine(`PING ${ip} (198.51.100.7) 56(84) bytes of data.`)
+    const latencyMs = 32
+    await wait(800)
+    printLine(`108 bytes from ${ip}: icmp_seq=1 ttl=56 time=${latencyMs}.7 ms`, 'success')
+    await wait(200)
+    printLine(`102 bytes from ${ip}: icmp_seq=2 ttl=56 time=${latencyMs}.1 ms`, 'success')
+    await wait(300)
+    printLine(`115 bytes from ${ip}: icmp_seq=3 ttl=56 time=${latencyMs}.5 ms`, 'success')
+    await wait(800)
+    printLine(`95 bytes from ${ip}: icmp_seq=4 ttl=56 time=${latencyMs}.9 ms`, 'success')
+    await wait(800)
+    printLine(`108 bytes from ${ip}: icmp_seq=5 ttl=56 time=${latencyMs}.4 ms`, 'success')
+    await wait(400)
+    printLine(`117 bytes from ${ip}: icmp_seq=6 ttl=56 time=${latencyMs}.2 ms`, 'success')
+    await wait(100)
+    printLine(`116 bytes from ${ip}: icmp_seq=7 ttl=56 time=${latencyMs}.8 ms`, 'success')
+    await wait(100)
+    printLine(`104 bytes from ${ip}: icmp_seq=8 ttl=56 time=${latencyMs}.6 ms`, 'success')
+    await wait(200)
+    printLine(`105 bytes from ${ip}: icmp_seq=9 ttl=56 time=${latencyMs}.3 ms`, 'success')
+    await wait(80)
+    printLine(`102 bytes from ${ip}: icmp_seq=10 ttl=56 time=${latencyMs}.7 ms`, 'success')
+    await wait(200)
+    printLine(`114 bytes from ${ip}: icmp_seq=11 ttl=56 time=${latencyMs}.5 ms`, 'success')
+    await wait(100)
+    printLine(`115 bytes from ${ip}: icmp_seq=12 ttl=56 time=${latencyMs}.1 ms`, 'success')
+    printLine(`--- ${ip} ping statistics ---`)
+    printLine('12 packets transmitted, 12 received, 0% packet loss, time 4080ms', 'success')
+    printLine(`rtt min/avg/max = ${latencyMs}.1/${latencyMs}.5/${latencyMs}.9 ms`, 'success')
+    return
+  }
+
+  if (ip === '203.0.113.42') {
+    printLine(`$ ping ${ip}`, 'command')
+    printLine(`PING ${ip} (203.0.113.42) 56(84) bytes of data.`)
+    const latencyMs = 47
+    await wait(800)
+    printLine(`125 bytes from ${ip}: icmp_seq=1 ttl=55 time=${latencyMs}.3 ms`, 'success')
+    printLine(`--- ${ip} ping statistics ---`)
+    printLine('1 packets transmitted, 1 received, 0% packet loss, time 800ms', 'success')
+    printLine(`rtt min/avg/max = ${latencyMs}.3/${latencyMs}.3/${latencyMs}.3 ms`, 'success')
+  }
+
 }
 
 function runCommand(rawCommand: string) {
