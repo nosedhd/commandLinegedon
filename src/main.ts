@@ -76,6 +76,139 @@ function wait(ms: number): Promise<void> {
   return new Promise((resolve) => window.setTimeout(resolve, ms))
 }
 
+export function fibonacciSequence(maxTerms = Number.MAX_SAFE_INTEGER): number[] {
+  const sequence: number[] = []
+  let previous = 0
+  let current = 1
+
+  while (sequence.length < maxTerms && current <= Number.MAX_SAFE_INTEGER - previous) {
+    sequence.push(previous)
+    const next = previous + current
+    previous = current
+    current = next
+  }
+
+  return sequence
+}
+
+export function primeSequence(maxTerms = Number.MAX_SAFE_INTEGER): number[] {
+  const sequence: number[] = []
+  let candidate = 2
+
+  while (sequence.length < maxTerms && candidate <= Number.MAX_SAFE_INTEGER) {
+    let isPrime = true
+
+    for (const prime of sequence) {
+      if (prime > Math.sqrt(candidate)) break
+      if (candidate % prime === 0) {
+        isPrime = false
+        break
+      }
+    }
+
+    if (isPrime) sequence.push(candidate)
+    candidate += 1
+  }
+
+  return sequence
+}
+
+export function harmonicSeries(maxTerms = Number.MAX_SAFE_INTEGER): number[] {
+  const sequence: number[] = []
+  let sum = 0
+  let denominator = 1
+
+  while (sequence.length < maxTerms && Number.isFinite(sum)) {
+    sum += 1 / denominator
+    sequence.push(sum)
+    denominator += 1
+  }
+
+  return sequence
+}
+
+export function powersOfTwo(maxTerms = Number.MAX_SAFE_INTEGER): number[] {
+  const sequence: number[] = []
+  let value = 1
+
+  while (sequence.length < maxTerms && value <= Number.MAX_SAFE_INTEGER) {
+    sequence.push(value)
+    value *= 2
+  }
+
+  return sequence
+}
+
+function randomPacketSize(): number {
+  return Math.floor(Math.random() * 65) + 64
+}
+
+function fibonacciTerm(index: number): number {
+  let previous = 0
+  let current = 1
+
+  for (let term = 0; term < index; term += 1) {
+    const next = previous + current
+    previous = current
+    current = next
+  }
+
+  return previous
+}
+
+function primeTerm(index: number): number {
+  let candidate = 2
+  let found = 0
+
+  while (true) {
+    let isPrime = true
+
+    for (let divisor = 2; divisor <= Math.sqrt(candidate); divisor += 1) {
+      if (candidate % divisor === 0) {
+        isPrime = false
+        break
+      }
+    }
+
+    if (isPrime) {
+      if (found === index) return candidate
+      found += 1
+    }
+
+    candidate += 1
+  }
+}
+
+function challengeTerm(hostNumber: number, index: number): number {
+  switch (hostNumber) {
+    case 1:
+      return fibonacciTerm(index)
+    case 2:
+      return primeTerm(index)
+    case 3:
+      return 10000 / (index + 1)
+    case 4:
+      return index + 1
+    default:
+      return 0
+  }
+}
+
+function challengeDelayMs(hostNumber: number, index: number, sequenceValue: number): number {
+  switch (hostNumber) {
+    case 1:
+      return Math.max(100, sequenceValue * 100)
+    case 2:
+      return sequenceValue * 100
+    case 3:
+      return Math.max(1, Math.floor(sequenceValue))
+    case 4:
+      return (index + 1) * 200
+    default:
+      return 100
+  }
+}
+
 function validIPv4(value: string): boolean {
   const octets = value.split('.')
   return octets.length === 4 && octets.every((octet) => /^(0|[1-9]\d{0,2})$/.test(octet) && Number(octet) <= 255)
@@ -160,6 +293,30 @@ async function simulatePing(ip: string) {
     printLine(`rtt min/avg/max = ${latencyMs}.3/${latencyMs}.3/${latencyMs}.3 ms`, 'success')
   }
 
+  const challengeMatch = ip.match(/^189\.168\.95\.([1-4])$/)
+  if (challengeMatch) {
+    const hostNumber = Number(challengeMatch[1])
+    const challengeDeadline = Date.now() + 60_000
+
+    printLine(`$ ping ${ip}`, 'command')
+    printLine(`PING ${ip} (189.168.95.${hostNumber}) 56(84) bytes of data.`)
+
+    let index = 0
+    while (Date.now() < challengeDeadline) {
+      const sequenceValue = challengeTerm(hostNumber, index)
+      const latencyMs = challengeDelayMs(hostNumber, index, sequenceValue)
+      const sequenceOffset = Math.abs(Math.trunc(Number(sequenceValue))) % 16
+      const packetSize = randomPacketSize() + sequenceOffset
+      const remainingMs = challengeDeadline - Date.now()
+      await wait(Math.min(latencyMs, remainingMs))
+      if (Date.now() >= challengeDeadline) break
+      printLine(`${packetSize} bytes from ${ip}: icmp_seq=${index + 1} ttl=${60 - hostNumber} time=${latencyMs.toFixed(1)} ms`, 'success')
+      index += 1
+    }
+
+    output.replaceChildren()
+  }
+
 }
 
 function runCommand(rawCommand: string) {
@@ -179,6 +336,8 @@ function runCommand(rawCommand: string) {
   }
   simulatePing(value)
 }
+
+
 
 printLine('NET//ECHO terminal v1.0.0', 'muted')
 printLine('simulation ready · type help for commands', 'muted')
